@@ -4,7 +4,7 @@
 yum -y install nodejs npm coffee-script vim htop git
 cd /etc/yum.repos.d/
 wget http://download.opensuse.org/repositories/home:p_conrad:coins/Fedora_21/home:p_conrad:coins.repo
-yum install namecoin
+yum -y install namecoin
 cd
 npm install -g dnschain
 npm update -g dnschain
@@ -17,9 +17,6 @@ useradd dnschain
 runuser namecoin -c "mkdir /home/namecoin/.namecoin"
 runuser dnschain -c "mkdir /home/dnschain/.dnschain"
 
-# adjust permission on namecoin home directory to permit dnschain access to it
-chmod o+r /home/namecoin
-chmod o+rwx -R /home/namecoin/.namecoin
 
 # Create dnschain configuration file
 cat << EOF > /usr/lib/systemd/system/dnschain.service
@@ -72,6 +69,15 @@ WantedBy=multi-user.target
 
 EOF
 
+#Create namecoin configuration files
+cat << EOF > /home/namecoin/.namecoin/namecoin.conf
+rpcuser=dnschain
+rpcpassword=9YCoZbajhHv4kqnwoeoqjuxtAikqjvhbQvtrWFtvH5h
+rpcport=8336
+daemon=1
+
+EOF
+
 #Create dnschain configuration files
 
 cat << EOF > /home/dnschain/.dnschain/dnschain.conf
@@ -100,6 +106,11 @@ chcon -u system_u /usr/lib/systemd/system/{dnschain,namecoin}.service
 
 chown -R dnschain:dnschain /home/dnschain
 chown -R namecoin:namecoin /home/namecoin
+
+# adjust permission on namecoin home directory to permit dnschain access to it
+chmod o+r /home/namecoin
+chmod o+rwx -R /home/namecoin/.namecoin
+
 
 systemctl enable dnschain
 systemctl enable namecoin
